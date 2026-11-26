@@ -239,9 +239,13 @@ function photoHtml(e,cls){
 function post(obj){
   return fetch(APPS_SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(obj)});
 }
+function itemMsg(id,d){
+  var it=S.catalog.items.filter(function(x){return x.id===id})[0]||{};
+  return {type:'item',id:id,doc:d,name:d.name||it.name||'',cat:it.cat||'',inv:it.inv||''};
+}
 function persistItem(id){
   var d=S.docs[id]; lsSet('pantry-items',S.docs); delete timers[id];
-  if(S.live||SYNC_ON){ post({type:'item',id:id,doc:d}).catch(function(){toast('Could not save. Check your connection.')}); }
+  if(S.live||SYNC_ON){ post(itemMsg(id,d)).catch(function(){toast('Could not save. Check your connection.')}); }
 }
 function patchItem(id,patch,opts){
   var cur=S.docs[id]||{};
@@ -583,7 +587,9 @@ function pull(first){
     var changed=false, m=d.items||{};
     Object.keys(m).forEach(function(id){ if(timers[id]) return; if(!sameJson(S.docs[id],m[id])){S.docs[id]=m[id];changed=true} });
     if(d.order && !(S.orderAt&&Date.now()-S.orderAt<8000) && !sameJson(S.order,d.order)){S.order={add:d.order.add||{},qty:d.order.qty||{},skip:d.order.skip||{}};changed=true}
-    setSync(true); lsSet('pantry-items',S.docs); lsSet('pantry-order',S.order);
+    setSync(true);
+    if(first&&!lsGet('names-synced-v2')){ var ids=Object.keys(S.docs),k=0; (function nxt(){ if(k>=ids.length){lsSet('names-synced-v2',1);return} post(itemMsg(ids[k],S.docs[ids[k]])).then(function(){k++;setTimeout(nxt,400)},function(){}) })(); }
+    lsSet('pantry-items',S.docs); lsSet('pantry-order',S.order);
     var busy=document.getElementById('scrim')||(document.activeElement&&/INPUT|TEXTAREA/.test(document.activeElement.tagName));
     if((changed||first)&&!busy) render();
   }).catch(function(){setSync(false)});
