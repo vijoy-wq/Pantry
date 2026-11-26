@@ -71,6 +71,7 @@ input,textarea{font:inherit;color:inherit}
 .cgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px 10px}
 .ctile{background:none;border:0;padding:0;display:flex;flex-direction:column;gap:6px;align-items:center;text-align:center;min-width:0;color:var(--ink)}
 .cimg{position:relative;width:100%;aspect-ratio:1;border-radius:16px;overflow:hidden;display:grid;place-items:center;background:oklch(var(--tile-l) var(--tile-c) var(--h,260));color:oklch(var(--tile-ink-l) .1 var(--h,260));font-weight:800;font-size:20px}
+.cat .tile img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block}
 .cimg.ico svg{width:62%;height:62%}
 .ph.ico svg{width:58%;height:58%}
 .cimg img{width:100%;height:100%;object-fit:cover;display:block}
@@ -252,9 +253,12 @@ function ago(iso){
 }
 function initials(n){var w=n.replace(/[^A-Za-z0-9 ]/g,' ').trim().split(/\s+/);return ((w[0]||'?')[0]+(w[1]?w[1][0]:'')).toUpperCase()}
 function hue(cat){return HUES[cat]!=null?HUES[cat]:260}
+function catPic(cat){return (S.docs['c_'+cat]||{}).photo||(typeof CATPICS!=='undefined'?CATPICS[cat]:null)||null}
 function photoHtml(e,cls){
   var h='style="--h:'+hue(e.cat)+'"';
   if(e.photo) return '<div class="ph" '+h+'><img src="'+esc(e.photo)+'" alt="" loading="lazy" onerror="this.remove()"></div>';
+  var cp=catPic(e.cat);
+  if(cp) return '<div class="ph" '+h+'><img src="'+esc(cp)+'" alt="" loading="lazy" onerror="this.remove()"></div>';
   return '<div class="ph ico" '+h+' aria-hidden="true">'+iconFor(e.cat)+'</div>';
 }
 
@@ -314,7 +318,7 @@ function renderRail(){
   var html='<button class="cat" data-cat="All" aria-pressed="'+(S.cat==='All')+'"><span class="tile" style="--h:262">All'+(tot?'<span class="bd">'+tot+'</span>':'')+'</span><span class="lb">All items</span></button>';
   S.catalog.categories.forEach(function(c){
     var b=by[c]||0;
-    html+='<button class="cat" data-cat="'+esc(c)+'" aria-pressed="'+(S.cat===c)+'"><span class="tile" style="--h:'+hue(c)+'">'+esc(initials(c))+(b?'<span class="bd">'+b+'</span>':'')+'</span><span class="lb">'+esc(c)+'</span></button>';
+    html+='<button class="cat" data-cat="'+esc(c)+'" aria-pressed="'+(S.cat===c)+'"><span class="tile" style="--h:'+hue(c)+'">'+(catPic(c)?'<img src="'+esc(catPic(c))+'" alt="">':esc(initials(c)))+(b?'<span class="bd">'+b+'</span>':'')+'</span><span class="lb">'+esc(c)+'</span></button>';
   });
   var r=$('#rail'), sc=r.scrollLeft; r.innerHTML=html; r.scrollLeft=sc;
 }
